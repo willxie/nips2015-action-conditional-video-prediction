@@ -15,7 +15,7 @@ def create_solver(solver_param, file_name=""):
   solver = caffe.get_solver(f.name)
   return solver
 
-def create_solver_proto(train_net, test_net, lr, prefix, 
+def create_solver_proto(train_net, test_net, lr, prefix,
       test_iter=300, test_interval=10000,
       max_iter=2e6, snapshot=100000, gpu=0, debug_info=False):
   solver = PB.SolverParameter()
@@ -42,20 +42,21 @@ def create_solver_proto(train_net, test_net, lr, prefix,
 def main(model, lr, prefix, weights, snapshot, mean, batch_size,
         test_batch_size, num_act, T, K, num_step, num_iter,
         gpu, debug_info, train_data, test_data, load_to_mem):
-  caffe.set_mode_gpu()
-  caffe.set_device(gpu[0])
+  # caffe.set_mode_gpu()
+  # caffe.set_device(gpu[0])
+  caffe.set_mode_cpu()
   train_net_file = prefix + '_train.prototxt'
   test_net_file = prefix + '_test.prototxt'
   solver_file_name= prefix + '_solver.prototxt'
-  train_net_file, train_proto = N.create_netfile(model, train_data, 
+  train_net_file, train_proto = N.create_netfile(model, train_data,
       mean, T, K, batch_size, num_act, num_step=num_step, file_name=train_net_file,
       load_to_mem=load_to_mem)
-  test_net_file, test_proto= N.create_netfile(model, test_data, 
+  test_net_file, test_proto= N.create_netfile(model, test_data,
       mean, T, K, test_batch_size, num_act, num_step=num_step, file_name=test_net_file,
       load_to_mem=load_to_mem)
   solver_proto = create_solver_proto(train_net_file, test_net_file,
       lr, prefix, max_iter=num_iter, debug_info=debug_info)
-  solver = create_solver(solver_proto, file_name=solver_file_name) 
+  solver = create_solver(solver_proto, file_name=solver_file_name)
   if snapshot:
     solver.restore(snapshot)
   elif weights:
@@ -80,7 +81,7 @@ if __name__ == "__main__":
   parser.add_argument("--batch_size", type=int, dest="batch_size",
                       default=4, help="Batch size")
   parser.add_argument("--test_batch_size", type=int, dest="test_batch_size",
-                      default=30, help="Batch size for test") 
+                      default=30, help="Batch size for test")
   parser.add_argument("--train_data", type=str, dest="train_data",
                       default="train", help="Directory for training data")
   parser.add_argument("--test_data", type=str, dest="test_data",
