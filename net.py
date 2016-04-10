@@ -68,7 +68,7 @@ def relu(bottom):
   return L.ReLU(bottom, in_place=True)
 
 def eltwise(bottom1, bottom2, op, coeff_blob=False):
-  return L.Eltwise(bottom1, bottom2, operation=op, coeff_blob=coeff_blob)
+  return L.Eltwise(bottom1, bottom2, operation=op)
 
 def euclidean_loss(bottom, label):
   return L.EuclideanLoss(bottom, label)
