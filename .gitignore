@@ -1,6 +1,6 @@
 ## General
 
-caffe/*
+caffe
 
 # Compiled Object files
 *.slo
