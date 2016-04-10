@@ -1,5 +1,7 @@
 ## General
 
+caffe/*
+
 # Compiled Object files
 *.slo
 *.lo
