@@ -42,9 +42,9 @@ def create_solver_proto(train_net, test_net, lr, prefix,
 def main(model, lr, prefix, weights, snapshot, mean, batch_size,
         test_batch_size, num_act, T, K, num_step, num_iter,
         gpu, debug_info, train_data, test_data, load_to_mem):
-  # caffe.set_mode_gpu()
-  # caffe.set_device(gpu[0])
-  caffe.set_mode_cpu()
+  caffe.set_mode_gpu()
+  caffe.set_device(gpu[0])
+  # caffe.set_mode_cpu()
   train_net_file = prefix + '_train.prototxt'
   test_net_file = prefix + '_test.prototxt'
   solver_file_name= prefix + '_solver.prototxt'
