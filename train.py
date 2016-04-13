@@ -17,7 +17,7 @@ def create_solver(solver_param, file_name=""):
 
 def create_solver_proto(train_net, test_net, lr, prefix,
       test_iter=300, test_interval=10000,
-      max_iter=2e6, snapshot=100000, gpu=0, debug_info=False):
+      max_iter=2e6, snapshot=1000, gpu=0, debug_info=False):
   solver = PB.SolverParameter()
   solver.train_net = train_net
   solver.test_net.extend([test_net])
