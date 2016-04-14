@@ -37,6 +37,8 @@ def main(model, weights, K, num_act, num_step, num_iter,
         data, mean, K + num_step, K, 1, num_act, num_step=num_step, mode='data')
     test_net_file, net_proto = N.create_netfile(model, data, mean, K, K, 
         1, num_act, num_step=1, mode='test')
+    print(data_net_file)
+    print(test_net_file)
     data_net = caffe.Net(data_net_file, caffe.TEST)
     test_net = caffe.Net(test_net_file, caffe.TEST)
     test_net.copy_from(weights)
@@ -105,8 +107,9 @@ def main(model, weights, K, num_act, num_step, num_iter,
       img = Image.fromarray(show_img)
       draw = ImageDraw.Draw(img)
       draw.text((10, 10), 'Step:' + str(step), fill=(255, 255, 255), font=font)
-      cv2.imshow('Display', np.array(img))
-      key = cv2.waitKey(40)
+      # cv2.imshow('Display', np.array(img))
+      cv2.imwrite("img/iter_{}_{}.jpg".format(i, step), np.array(img))
+      # key = cv2.waitKey(40)
 
       if video:
         file_name = video+'/{:0>3d}-{:0>5d}.png'.format(i, step)
