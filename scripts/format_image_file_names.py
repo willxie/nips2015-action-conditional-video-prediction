@@ -9,7 +9,7 @@ def is_int(s):
 
 def main():
     """ Put enough prepending 0 padding according to the README """
-    input_dir = "./"
+    input_dir = "../pong_rand_actions/test/0000/"
 
     for input_file in os.listdir(input_dir):
         filename, file_extension = os.path.splitext(input_file)

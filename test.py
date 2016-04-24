@@ -26,22 +26,26 @@ def post_process(data, mean, scale):
   t = t.clip(0, 255)
   return t.astype('uint8').squeeze().transpose([1, 0, 2]).transpose([0, 2, 1])
 
+# T is the position in time and K is the number of frames used per prediction 
 def main(model, weights, K, num_act, num_step, num_iter,
         gpu, data, mean, video):
   font = ImageFont.truetype('/usr/share/fonts/dejavu/DejaVuSans.ttf', 20)
   caffe.set_mode_gpu()
   caffe.set_device(gpu)
-
+  
+  # CNN
   if model == 1:
     data_net_file, net_proto = N.create_netfile(model, 
         data, mean, K + num_step, K, 1, num_act, num_step=num_step, mode='data')
     test_net_file, net_proto = N.create_netfile(model, data, mean, K, K, 
         1, num_act, num_step=1, mode='test')
-    print(data_net_file)
-    print(test_net_file)
+    # print(data_net_file)
+    # print(test_net_file)
+
     data_net = caffe.Net(data_net_file, caffe.TEST)
     test_net = caffe.Net(test_net_file, caffe.TEST)
     test_net.copy_from(weights)
+  # RNN
   else:
     data_net_file, net_proto = N.create_netfile(model, 
         data, mean, K + num_step, K, 1, num_act, num_step=num_step, mode='data')

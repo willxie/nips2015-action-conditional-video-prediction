@@ -9,12 +9,13 @@ def is_int(s):
 
 
 def main(): 
-    input_file = "pong_rand_actions.txt"
+    input_file = "input_actions.txt"
+    output_file = "act.log"
     num_actions = 0
     container = {}
     
     filename, file_extension = os.path.splitext(input_file)
-    with open(input_file, "rb") as r, open("act.log", "wb") as w:
+    with open(input_file, "rb") as r, open(output_file, "wb") as w:
         for line in r:
             line_s = line.rstrip("\n")
             if (is_int(line_s)):
@@ -31,6 +32,7 @@ def main():
         f.write("orig" + "\t=>\t" + "new" + "\n")
         for key, value in container.iteritems():
             f.write(str(key) + "\t=>\t" + str(value) + "\n")
-    
+        f.write("Total number of actions: {}".format(num_actions))    
+
 if __name__ == "__main__":
     main()
