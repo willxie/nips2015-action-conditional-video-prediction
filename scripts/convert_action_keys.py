@@ -1,4 +1,5 @@
 import os
+import sys
 
 def is_int(s):    
     try: 
@@ -9,8 +10,14 @@ def is_int(s):
 
 
 def main(): 
-    input_file = "input_actions.txt"
-    output_file = "act.log"
+    if len(sys.argv) != 2:
+        print("Usage: target_dir")
+        exit()
+
+    root_dir = os.getcwd()
+    input_file = root_dir + "/" + sys.argv[1] + "act.log"
+    output_file = "./act.log"
+    output_file_key = "./act_key.txt"
     num_actions = 0
     container = {}
     
@@ -28,7 +35,7 @@ def main():
     
     
     # Write the keys
-    with open(filename + "_key" + file_extension, "wb") as f:
+    with open(output_file_key, "wb") as f:
         f.write("orig" + "\t=>\t" + "new" + "\n")
         for key, value in container.iteritems():
             f.write(str(key) + "\t=>\t" + str(value) + "\n")
