@@ -1,0 +1,837 @@
+layer {
+  name: "data"
+  type: "AtariData"
+  top: "data"
+  top: "act"
+  transform_param {
+    scale: 0.00392156862745
+    mean_file: "mean.binaryproto"
+  }
+  data_param {
+    source: "train"
+    batch_size: 32
+  }
+  atari_data_param {
+    num_frame: 5
+    num_act: 3
+    channels: 3
+    streaming: false
+    out_clip: false
+    load_to_memory: false
+    out_act: true
+  }
+}
+layer {
+  name: "x_flat"
+  type: "Flatten"
+  bottom: "data"
+  top: "x_flat"
+  flatten_param {
+    axis: 1
+    end_axis: 2
+  }
+}
+layer {
+  name: "act_flat"
+  type: "Flatten"
+  bottom: "act"
+  top: "act_flat"
+  flatten_param {
+    axis: 1
+    end_axis: 2
+  }
+}
+layer {
+  name: "x-01"
+  type: "Slice"
+  bottom: "x_flat"
+  top: "x-01"
+  top: "x-02"
+  top: "x-03"
+  top: "x-04"
+  top: "x-05"
+  slice_param {
+    axis: 1
+  }
+}
+layer {
+  name: "act-01"
+  type: "Slice"
+  bottom: "act_flat"
+  top: "act-01"
+  top: "act-02"
+  top: "act-03"
+  top: "act-04"
+  slice_param {
+    axis: 1
+  }
+}
+layer {
+  name: "label"
+  type: "Concat"
+  bottom: "x-05"
+  top: "label"
+  concat_param {
+    axis: 0
+  }
+}
+
+###################################  Prediction portion ##################################
+
+layer {
+  name: "input"
+  type: "Concat"
+  bottom: "x-01"
+  bottom: "x-02"
+  bottom: "x-03"
+  bottom: "x-04"
+  top: "input"
+  concat_param {
+    axis: 1
+  }
+}
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "input"
+  top: "conv1"
+  param {
+    name: "conv1-w"
+    lr_mult: 1
+  }
+  param {
+    name: "conv1-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 0
+    pad_w: 1
+    kernel_h: 8
+    kernel_w: 8
+  }
+}
+layer {
+  name: "relu1"
+  type: "ReLU"
+  bottom: "conv1"
+  top: "conv1"
+}
+layer {
+  name: "conv2"
+  type: "Convolution"
+  bottom: "conv1"
+  top: "conv2"
+  param {
+    name: "conv2-w"
+    lr_mult: 1
+  }
+  param {
+    name: "conv2-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 6
+    kernel_w: 6
+  }
+}
+layer {
+  name: "relu2"
+  type: "ReLU"
+  bottom: "conv2"
+  top: "conv2"
+}
+layer {
+  name: "conv3"
+  type: "Convolution"
+  bottom: "conv2"
+  top: "conv3"
+  param {
+    name: "conv3-w"
+    lr_mult: 1
+  }
+  param {
+    name: "conv3-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 6
+    kernel_w: 6
+  }
+}
+layer {
+  name: "relu3"
+  type: "ReLU"
+  bottom: "conv3"
+  top: "conv3"
+}
+layer {
+  name: "conv4"
+  type: "Convolution"
+  bottom: "conv3"
+  top: "conv4"
+  param {
+    name: "conv4-w"
+    lr_mult: 1
+  }
+  param {
+    name: "conv4-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 4
+    kernel_w: 4
+  }
+}
+layer {
+  name: "relu4"
+  type: "ReLU"
+  bottom: "conv4"
+  top: "conv4"
+}
+layer {
+  name: "ip1"
+  type: "InnerProduct"
+  bottom: "conv4"
+  top: "ip1"
+  param {
+    name: "ip1-w"
+    lr_mult: 1
+  }
+  param {
+    name: "ip1-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2048
+    bias_term: true
+    weight_filler {
+      type: "xavier"
+    }
+    axis: 1
+  }
+}
+layer {
+  name: "relu5"
+  type: "ReLU"
+  bottom: "ip1"
+  top: "ip1"
+}
+layer {
+  name: "enc-factor"
+  type: "InnerProduct"
+  bottom: "ip1"
+  top: "enc-factor"
+  param {
+    name: "enc-w"
+    lr_mult: 1
+  }
+  param {
+    name: "enc-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2048
+    bias_term: true
+    weight_filler {
+      type: "uniform"
+      min: -1
+      max: 1
+    }
+    axis: 1
+  }
+}
+layer {
+  name: "act-embed"
+  type: "InnerProduct"
+  bottom: "act-04"
+  top: "act-embed"
+  param {
+    name: "act-embed-w"
+    lr_mult: 1
+  }
+  param {
+    name: "act-embed-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2048
+    bias_term: true
+    weight_filler {
+      type: "uniform"
+      min: -0.1
+      max: 0.1
+    }
+    axis: 1
+  }
+}
+layer {
+  name: "dec-factor"
+  type: "Eltwise"
+  bottom: "enc-factor"
+  bottom: "act-embed"
+  top: "dec-factor"
+  eltwise_param {
+    operation: PROD
+  }
+}
+layer {
+  name: "dec"
+  type: "InnerProduct"
+  bottom: "dec-factor"
+  top: "dec"
+  param {
+    name: "dec-w"
+    lr_mult: 1
+  }
+  param {
+    name: "dec-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2048
+    bias_term: true
+    weight_filler {
+      type: "xavier"
+    }
+    axis: 1
+  }
+}
+layer {
+  name: "ip4"
+  type: "InnerProduct"
+  bottom: "dec"
+  top: "ip4"
+  param {
+    name: "dec-reshape-w"
+    lr_mult: 1
+  }
+  param {
+    name: "dec-reshape-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 11264
+    bias_term: true
+    weight_filler {
+      type: "xavier"
+    }
+    axis: 1
+  }
+}
+layer {
+  name: "relu6"
+  type: "ReLU"
+  bottom: "ip4"
+  top: "ip4"
+}
+layer {
+  name: "reshape"
+  type: "Reshape"
+  bottom: "ip4"
+  top: "reshape"
+  reshape_param {
+    shape {
+      dim: -1
+      dim: 128
+      dim: 11
+      dim: 8
+    }
+  }
+}
+layer {
+  name: "deconv4"
+  type: "Deconvolution"
+  bottom: "reshape"
+  top: "deconv4"
+  param {
+    name: "deconv4-w"
+    lr_mult: 1
+  }
+  param {
+    name: "deconv4-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 4
+    kernel_w: 4
+  }
+}
+layer {
+  name: "relu7"
+  type: "ReLU"
+  bottom: "deconv4"
+  top: "deconv4"
+}
+layer {
+  name: "deconv3"
+  type: "Deconvolution"
+  bottom: "deconv4"
+  top: "deconv3"
+  param {
+    name: "deconv3-w"
+    lr_mult: 1
+  }
+  param {
+    name: "deconv3-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 6
+    kernel_w: 6
+  }
+}
+layer {
+  name: "relu8"
+  type: "ReLU"
+  bottom: "deconv3"
+  top: "deconv3"
+}
+layer {
+  name: "deconv2"
+  type: "Deconvolution"
+  bottom: "deconv3"
+  top: "deconv2"
+  param {
+    name: "deconv2-w"
+    lr_mult: 1
+  }
+  param {
+    name: "deconv2-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 6
+    kernel_w: 6
+  }
+}
+layer {
+  name: "relu9"
+  type: "ReLU"
+  bottom: "deconv2"
+  top: "deconv2"
+}
+layer {
+  name: "x_hat-05"
+  type: "Deconvolution"
+  bottom: "deconv2"
+  top: "x_hat-05"
+  param {
+    name: "deconv1-w"
+    lr_mult: 1
+  }
+  param {
+    name: "deconv1-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 3
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 0
+    pad_w: 1
+    kernel_h: 8
+    kernel_w: 8
+  }
+}
+layer {
+  name: "x_hat"
+  type: "Concat"
+  bottom: "x_hat-05"
+  top: "x_hat"
+  concat_param {
+    axis: 0
+  }
+}
+layer {
+  name: "silence"
+  type: "Silence"
+  bottom: "act-01"
+  bottom: "act-02"
+  bottom: "act-03"
+}
+layer {
+  name: "l2_loss"
+  type: "EuclideanLoss"
+  bottom: "x_hat"
+  bottom: "label"
+  top: "l2_loss"
+}
+###################################  Equivariance portion ##################################
+layer {
+  name: "input_p"
+  type: "Concat"
+  bottom: "x-02"
+  bottom: "x-03"
+  bottom: "x-04"
+  bottom: "x-05"
+  top: "input_p"
+  concat_param {
+    axis: 1
+  }
+}
+layer {
+  name: "conv1_p"
+  type: "Convolution"
+  bottom: "input_p"
+  top: "conv1_p"
+  param {
+    name: "conv1-w"
+    lr_mult: 1
+  }
+  param {
+    name: "conv1-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 0
+    pad_w: 1
+    kernel_h: 8
+    kernel_w: 8
+  }
+}
+layer {
+  name: "relu1_p"
+  type: "ReLU"
+  bottom: "conv1_p"
+  top: "conv1_p"
+}
+layer {
+  name: "conv2_p"
+  type: "Convolution"
+  bottom: "conv1_p"
+  top: "conv2_p"
+  param {
+    name: "conv2-w"
+    lr_mult: 1
+  }
+  param {
+    name: "conv2-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 6
+    kernel_w: 6
+  }
+}
+layer {
+  name: "relu2_p"
+  type: "ReLU"
+  bottom: "conv2_p"
+  top: "conv2_p"
+}
+layer {
+  name: "conv3_p"
+  type: "Convolution"
+  bottom: "conv2_p"
+  top: "conv3_p"
+  param {
+    name: "conv3-w"
+    lr_mult: 1
+  }
+  param {
+    name: "conv3-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 1
+    pad_w: 1
+    kernel_h: 6
+    kernel_w: 6
+  }
+}
+layer {
+  name: "relu3_p"
+  type: "ReLU"
+  bottom: "conv3_p"
+  top: "conv3_p"
+}
+layer {
+  name: "conv4_p"
+  type: "Convolution"
+  bottom: "conv3_p"
+  top: "conv4_p"
+  param {
+    name: "conv4-w"
+    lr_mult: 1
+  }
+  param {
+    name: "conv4-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 128
+    stride: 2
+    weight_filler {
+      type: "xavier"
+    }
+    pad_h: 0
+    pad_w: 0
+    kernel_h: 4
+    kernel_w: 4
+  }
+}
+layer {
+  name: "relu4_p"
+  type: "ReLU"
+  bottom: "conv4_p"
+  top: "conv4_p"
+}
+layer {
+  name: "ip1_p"
+  type: "InnerProduct"
+  bottom: "conv4_p"
+  top: "ip1_p"
+  param {
+    name: "ip1-w"
+    lr_mult: 1
+  }
+  param {
+    name: "ip1-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2048
+    bias_term: true
+    weight_filler {
+      type: "xavier"
+    }
+    axis: 1
+  }
+}
+layer {
+  name: "relu5_p"
+  type: "ReLU"
+  bottom: "ip1_p"
+  top: "ip1_p"
+}
+layer {
+  name: "enc-factor_p"
+  type: "InnerProduct"
+  bottom: "ip1_p"
+  top: "enc-factor_p"
+  param {
+    name: "enc-w"
+    lr_mult: 1
+  }
+  param {
+    name: "enc-b"
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2048
+    bias_term: true
+    weight_filler {
+      type: "uniform"
+      min: -1
+      max: 1
+    }
+    axis: 1
+  }
+}
+#### The following depends on the number of actions
+layer {
+  name: "slice-actions"
+  type: "Slice"
+  bottom: "act-04"
+  top: "act-bool-01"
+  top: "act-bool-02"
+  top: "act-bool-03"
+  slice_param {
+    axis: 1
+    slice_point: 1
+    slice_point: 2
+  }
+}
+layer {
+  name: "equi-map-01"
+  type: "InnerProduct"
+  bottom: "enc-factor_p"
+  top: "equi-map-01"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2048
+    bias_term: true
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler{
+      type: "constant"
+    }
+  }
+}
+layer {
+  name: "equi-map-02"
+  type: "InnerProduct"
+  bottom: "enc-factor_p"
+  top: "equi-map-02"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2048
+    bias_term: true
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler{
+      type: "constant"
+    }
+  }
+}
+layer {
+  name: "equi-map-03"
+  type: "InnerProduct"
+  bottom: "enc-factor_p"
+  top: "equi-map-03"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2048
+    bias_term: true
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler{
+      type: "constant"
+    }
+  }
+}
+layer {
+  name: "contra-loss-01"
+  type: "ContrastiveLoss"
+  contrastive_loss_param {
+    margin: 0.1
+  }
+  bottom: "enc-factor"
+  bottom: "equi-map-01"
+  bottom: "act-bool-01"
+  top: "contra-loss-01"
+  loss_weight: 1
+}
+layer {
+  name: "contra-loss-02"
+  type: "ContrastiveLoss"
+  contrastive_loss_param {
+    margin: 0.1
+  }
+  bottom: "enc-factor"
+  bottom: "equi-map-02"
+  bottom: "act-bool-02"
+  top: "contra-loss-02"
+  loss_weight: 1
+}
+layer {
+  name: "contra-loss-03"
+  type: "ContrastiveLoss"
+  contrastive_loss_param {
+    margin: 0.1
+  }
+  bottom: "enc-factor"
+  bottom: "equi-map-03"
+  bottom: "act-bool-03"
+  top: "contra-loss-03"
+  loss_weight: 1
+}
