@@ -10,7 +10,7 @@ def is_int(s):
 
 
 def main(): 
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print("Usage: target_dir")
         exit()
 
