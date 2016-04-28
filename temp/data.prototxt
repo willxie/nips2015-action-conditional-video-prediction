@@ -1,0 +1,23 @@
+layer {
+  name: "data"
+  type: "AtariData"
+  top: "data"
+  top: "act"
+  transform_param {
+    scale: 0.00392156862745
+    mean_file: "mean.binaryproto"
+  }
+  data_param {
+    source: "test"
+    batch_size: 1
+  }
+  atari_data_param {
+    num_frame: 5
+    num_act: 3
+    channels: 3
+    streaming: false
+    out_clip: false
+    load_to_memory: false
+    out_act: true
+  }
+}
