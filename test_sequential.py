@@ -19,6 +19,17 @@ import subprocess as sp
 def tag(i):
   return '-{:0>2d}'.format(i)
 
+def pre_process(data, mean, scale):
+  t = data.copy().squeeze().astype('float64')
+  t = t.transpose([2, 0, 1])
+  print(t.shape)
+  print(mean.shape)
+  t /= scale
+  t -= mean
+  t *= scale
+  # t = t.clip(0, 255)
+  return t.squeeze()
+
 def post_process(data, mean, scale):
   t = data.copy().squeeze()
   t /= scale
@@ -32,7 +43,8 @@ def main(model, weights, K, num_act, num_step, num_iter,
   font = ImageFont.truetype('/usr/share/fonts/dejavu/DejaVuSans.ttf', 20)
   caffe.set_mode_gpu()
   caffe.set_device(gpu)
-  
+  #caffe.set_mode_cpu()
+
   # CNN
   if model == 1:
     data_net_file, net_proto = N.create_netfile(model, 
@@ -66,11 +78,16 @@ def main(model, weights, K, num_act, num_step, num_iter,
   mean_blob.ParseFromString(mean_bin)
   mean_arr = caffe.io.blobproto_to_array(mean_blob).squeeze()
 
-  mu = mean_arr
-  transformer = caffe.io.Transformer({'data': test_net.blobs['data'].data.shape})
-  
+  mu = np.array(caffe.io.blobproto_to_array(mean_blob))
+  mu = mu[0]
+  mu = mu.mean(1).mean(1)
+  print 'mean-subtracted values:', zip('BGR', mu)
+  print mean_arr.shape
+  print mean_arr
+
+  transformer = caffe.io.Transformer({'data': (50, 3, 210, 160)})
   transformer.set_transpose('data', (2,0,1))  # move image channels to outermost dimension
-  transformer.set_mean('data', mu)            # subtract the dataset-mean value in each channel
+  transformer.set_mean('data', mean_arr)            # subtract the dataset-mean value in each channel
   transformer.set_raw_scale('data', 255)      # rescale from [0, 1] to [0, 255]
   transformer.set_channel_swap('data', (2,1,0))  # swap channels from RGB to BGR
 
@@ -82,18 +99,28 @@ def main(model, weights, K, num_act, num_step, num_iter,
     print("iteration " + str(i) + "/" + str(num_iter)) 
     data_net.forward()
 
-    image = caffe.io.load_image("/work/04018/wxie/maverick/nips2015-action-conditional-video-prediction/example/0000/00000.png")
+    image_path = "/work/04018/wxie/maverick/nips2015-action-conditional-video-prediction/example/test/0000/{0:05d}.png".format(i)
+    print(image_path)
+    image = caffe.io.load_image(image_path)
+    # image = cv2.imread(image_path)
+    processed_image = pre_process(image, mean_arr, 1./255)
+
     transformed_image = transformer.preprocess('data', image)
-    data_blob = transformed_image
+    #data_blob = transformed_image
+    data_blob = processed_image
+    data_blob = np.expand_dims(data_blob, axis=0)
+    data_blob = np.expand_dims(data_blob, axis=0)
+    
+    print(data_blob.shape)
+    print(test_net.blobs['data'].data.shape)
 
     # data_blob = data_net.blobs['data'].data
     act_blob = data_net.blobs['act'].data
     if model == 1:
+      
       test_net.blobs['data'].data[:] = data_blob[:, 0:K, :, :, :]
       test_net.blobs['act'].data[:] = act_blob[:, K-1, :]
       net = test_net
-      print(test_net.blobs['data'].data.shape)
-      print(test_net.blobs['act'].data.shape)
     elif model == 2:
       clip_blob = data_net.blobs['clip']
       encoder_net.blobs['data'].data[:] = data_blob[0:K, :, :, :, :]
@@ -113,14 +140,18 @@ def main(model, weights, K, num_act, num_step, num_iter,
     for step in range(0, num_step):
       net.forward()
       if model == 1:
+
         pred_data[:] = net.blobs['x_hat'+tag(K+1)].data[:]
-        true_data[:] = data_net.blobs['data'].data[:, K+step, :, :, :]
+        print(pred_data.shape)
+        # true_data[:] = data_net.blobs['data'].data[:, K+step, :, :, :]
+        # true_data[:] = transformed_image
+        true_data[:] = processed_image
       elif model == 2:
         pred_data[:] = net.blobs['x_hat'+tag(1)].data[:]
         true_data[:] = data_net.blobs['data'].data[K+step, :, :, :, :]
       pred_img = post_process(pred_data, mean_arr, 1./255)
       true_img = post_process(true_data, mean_arr, 1./255)
-      
+      print(pred_img.shape) 
       # display
       show_img = np.hstack((pred_img, true_img))
       top_pad = np.zeros((35, show_img.shape[1], show_img.shape[2]), np.uint8)
@@ -150,7 +181,7 @@ def main(model, weights, K, num_act, num_step, num_iter,
 
   if video:
     sp.call(['ffmpeg', '-pattern_type', 'glob', '-r', '15', '-i', video+'/*.png', '-qscale', '0', video+'.mp4'])
-
+# 
 if __name__ == "__main__":
   parser = ArgumentParser()
   parser.add_argument("--model", type=int, dest="model",
