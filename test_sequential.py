@@ -48,16 +48,17 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
   # A list of trained networks
   net_list = []
   for model_idx in range(num_models):
-    # data_net_file, net_proto = N.create_netfile(model, 
-    #     data, mean, K + num_step, K, 1, num_act, num_step=num_step, mode='data',
-    #     # file_name='data.prototxt'
-    #     )
+    data_net_file, net_proto = N.create_netfile(model, 
+        data, mean, K + num_step, K, 1, num_act, num_step=num_step, mode='data',
+        # file_name='data.prototxt'
+        )
+    data_net = caffe.Net(data_net_file, caffe.TEST)
+
     test_net_file, net_proto = N.create_netfile(model, data, mean, K, K, 
         1, num_act, num_step=1, mode='test', 
         file_name='model.prototxt'
         )
 
-    # data_net = caffe.Net(data_net_file, caffe.TEST)
     test_net = caffe.Net(test_net_file, caffe.TEST)
     test_net.copy_from(weights)
     net_list.append(test_net)
@@ -80,54 +81,71 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
   # transformer.set_channel_swap('data', (2,1,0))  # swap channels from RGB to BGR
 
   input_dir = os.getcwd() + "/" + data + "/0000/"
-  print("input_dir")
+  print("\nData directory:")
   print(input_dir)
 
   # Read the actions
+  action_list = []
   with open(input_dir + "act.log", 'rb') as f: 
-    action_list = [ int(next(f).rstrip('\n')) for x in range(num_iter) ]
-  
+    for line in f:
+      action_list.append(int(line.rstrip('\n')))
+    # action_list = [ int(next(f).rstrip('\n')) for x in range(num_iter) ]
+
   for i in range(0, num_iter):
     print("Image: " + str(i) + "/" + str(num_iter)) 
-    # data_net.forward()
 
-     # TODO stack them into one tensor 
-    image_path = input_dir + "{0:05d}.png".format(i)
-    print(image_path)
+    # Stacking the images
+    data_blob_list = []
+    for j in range(K):
+      image_path = input_dir + "{0:05d}.png".format(i + j)
+      print(image_path)
+      image = caffe.io.load_image(image_path) # RGB h x w x c
+      # Change color 
+      image_bgr = image.copy()
+      image_bgr[:,:,0] = image[:,:,2]
+      image_bgr[:,:,1] = image[:,:,1]
+      image_bgr[:,:,2] = image[:,:,0]
+      
+      # transformed_image = transformer.preprocess('data', image)
+      processed_image = pre_process(image_bgr, mean_arr, 1./255)
+      # t = post_process(processed_image, mean_arr, 1./255) 
+      # how_img = np.hstack((t, t))
+      # test_img = Image.fromarray(how_img)
+      # cv2.imwrite("img/1_{0:05d}.jpg".format(i), np.array(test_img))
+   
+      # data_blob = transformed_image
+      # Expand to the right dim 
+      data_blob_temp = processed_image
+      data_blob_temp = np.expand_dims(data_blob_temp, axis=0)
+      data_blob_temp = np.expand_dims(data_blob_temp, axis=0)
+      data_blob_list.append(data_blob_temp)
+
+    data_blob = np.concatenate(tuple(data_blob_list), axis=1)
+    
+    # For ground truth
+    image_path = input_dir + "{0:05d}.png".format(i + K)
     image = caffe.io.load_image(image_path) # RGB h x w x c
-    # Change color 
     image_bgr = image.copy()
     image_bgr[:,:,0] = image[:,:,2]
     image_bgr[:,:,1] = image[:,:,1]
     image_bgr[:,:,2] = image[:,:,0]
-    
-    # transformed_image = transformer.preprocess('data', image)
     processed_image = pre_process(image_bgr, mean_arr, 1./255)
-    # t = post_process(processed_image, mean_arr, 1./255) 
-    # how_img = np.hstack((t, t))
-    # test_img = Image.fromarray(how_img)
-    # cv2.imwrite("img/1_{0:05d}.jpg".format(i), np.array(test_img))
 
-
-    # data_blob = transformed_image
-    # Expand to the right dim 
-    data_blob = processed_image
-    data_blob = np.expand_dims(data_blob, axis=0)
-    data_blob = np.expand_dims(data_blob, axis=0)
-    
+    # data_net.forward()
     # data_blob = data_net.blobs['data'].data
     # act_blob = data_net.blobs['act'].data
 
+    # Convert action into 1 hot vector
     act_blob = np.array([[[0.]*num_act]])
-    act_blob[:,:,action_list[i]] = 1.
+    act_blob[:,:,action_list[i + K - 1]] = 1.
 
     pred_img_list = []
     pred_data = np.zeros((3, 210, 160), np.float)
     true_data = np.zeros((3, 210, 160), np.float)
 
     for test_net in net_list:
-      test_net.blobs['data'].data[:] = data_blob[:, 0:K, :, :, :]
-      test_net.blobs['act'].data[:] = act_blob[:, K-1, :]
+      test_net.blobs['data'].data[:] = data_blob[:]
+      test_net.blobs['act'].data[:]  = act_blob[:]
 
       test_net.forward()
 
@@ -142,7 +160,6 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
     pred_img_list.append(true_img)
 
     # display
-    print(pred_img_list[0].shape)
     show_img = np.hstack(tuple(pred_img_list))
     top_pad = np.zeros((35, show_img.shape[1], show_img.shape[2]), np.uint8)
     show_img = np.vstack((top_pad, show_img))
@@ -150,6 +167,9 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
     draw = ImageDraw.Draw(img)
     draw.text((10, 10), 'Step:' , fill=(255, 255, 255), font=font)
     # cv2.imshow('Display', np.array(img))
+    image_dir = "img/"
+    if not os.path.exists(image_dir):
+      os.makedirs(image_dir)
     cv2.imwrite("img/{0:05d}.jpg".format(i), np.array(img))
 
 if __name__ == "__main__":
