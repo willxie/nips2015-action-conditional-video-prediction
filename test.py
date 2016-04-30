@@ -36,11 +36,13 @@ def main(model, weights, K, num_act, num_step, num_iter,
   # CNN
   if model == 1:
     data_net_file, net_proto = N.create_netfile(model, 
-        data, mean, K + num_step, K, 1, num_act, num_step=num_step, mode='data')
+        data, mean, K + num_step, K, 1, num_act, num_step=num_step, mode='data',
+        # file_name='data.prototxt'
+        )
     test_net_file, net_proto = N.create_netfile(model, data, mean, K, K, 
-        1, num_act, num_step=1, mode='test')
-    # print(data_net_file)
-    # print(test_net_file)
+        1, num_act, num_step=1, mode='test', 
+        # file_name='model.prototxt'
+        )
 
     data_net = caffe.Net(data_net_file, caffe.TEST)
     test_net = caffe.Net(test_net_file, caffe.TEST)
@@ -77,6 +79,8 @@ def main(model, weights, K, num_act, num_step, num_iter,
       test_net.blobs['data'].data[:] = data_blob[:, 0:K, :, :, :]
       test_net.blobs['act'].data[:] = act_blob[:, K-1, :]
       net = test_net
+      print(test_net.blobs['data'].data.shape)
+      print(test_net.blobs['act'].data.shape)
     elif model == 2:
       clip_blob = data_net.blobs['clip']
       encoder_net.blobs['data'].data[:] = data_blob[0:K, :, :, :, :]
