@@ -78,12 +78,17 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
   #  transformer.set_mean('data', mean_arr)            # subtract the dataset-mean value in each channel
   #  transformer.set_raw_scale('data', 255)      # rescale from [0, 1] to [0, 255]
   transformer.set_channel_swap('data', (2,1,0))  # swap channels from RGB to BGR
-  
+
+  # Read the actions
+  with open("/work/04018/wxie/maverick/nips2015-action-conditional-video-prediction/example/test/0000/" + "act.log", 'rb') as f: 
+    action_list = [ int(next(f).rstrip('\n')) for x in range(num_iter) ]
+ 
   for i in range(0, num_iter):
     print("iteration " + str(i) + "/" + str(num_iter)) 
     data_net.forward()
 
-    # TODO stack them into one tensor 
+     # TODO stack them into one tensor 
+
     image_path = "/work/04018/wxie/maverick/nips2015-action-conditional-video-prediction/example/test/0000/{0:05d}.png".format(i)
     print(image_path)
     image = caffe.io.load_image(image_path) # RGB h x w x c
@@ -107,18 +112,18 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
     data_blob = np.expand_dims(data_blob, axis=0)
     data_blob = np.expand_dims(data_blob, axis=0)
     
-    
     # data_blob = data_net.blobs['data'].data
-    act_blob = data_net.blobs['act'].datu
-    print(act_blob.shape)
-    print(act_blob)
+    # act_blob = data_net.blobs['act'].data
+
+    act_blob = np.array([[[0.]*num_act]])
+    act_blob[:,:,action_list[i]] = 1.
+
     pred_img_list = []
     pred_data = np.zeros((3, 210, 160), np.float)
     true_data = np.zeros((3, 210, 160), np.float)
 
     for test_net in net_list:
       test_net.blobs['data'].data[:] = data_blob[:, 0:K, :, :, :]
-      # TODO: put in the proper action
       test_net.blobs['act'].data[:] = act_blob[:, K-1, :]
 
       test_net.forward()
