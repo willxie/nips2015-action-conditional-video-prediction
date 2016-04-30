@@ -29,11 +29,14 @@ def pre_process(data, mean, scale):
   # t = t.clip(0, 255)
   return t.squeeze()
 
+
 def post_process(data, mean, scale):
   t = data.copy().squeeze()
   t /= scale
   t += mean
+  t = t.clip(0, 255)
   return t.astype('uint8').squeeze().transpose([1, 0, 2]).transpose([0, 2, 1])
+
 # T is the position in time and K is the number of frames used per prediction 
 def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, num_step, num_iter,
         gpu, data, mean, video, ):
@@ -78,17 +81,17 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
   
   for i in range(0, num_iter):
     print("iteration " + str(i) + "/" + str(num_iter)) 
-    # data_net.forward()
+    data_net.forward()
 
     # TODO stack them into one tensor 
     image_path = "/work/04018/wxie/maverick/nips2015-action-conditional-video-prediction/example/test/0000/{0:05d}.png".format(i)
     print(image_path)
     image = caffe.io.load_image(image_path) # RGB h x w x c
     # Change color 
-    # image_bgr = image.copy()
-    # image_bgr[:,:,0] = image[:,:,2]
-    # image_bgr[:,:,1] = image[:,:,1]
-    # image_bgr[:,:,2] = image[:,:,0]
+    image_bgr = image.copy()
+    image_bgr[:,:,0] = image[:,:,2]
+    image_bgr[:,:,1] = image[:,:,1]
+    image_bgr[:,:,2] = image[:,:,0]
     
     # transformed_image = transformer.preprocess('data', image)
     processed_image = pre_process(image, mean_arr, 1./255)
@@ -104,11 +107,11 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
     data_blob = np.expand_dims(data_blob, axis=0)
     data_blob = np.expand_dims(data_blob, axis=0)
     
-    # print(data_blob.shape)
-    # print(test_net.blobs['data'].data.shape)
-
+    
     # data_blob = data_net.blobs['data'].data
-    act_blob = data_net.blobs['act'].data
+    act_blob = data_net.blobs['act'].datu
+    print(act_blob.shape)
+    print(act_blob)
     pred_img_list = []
     pred_data = np.zeros((3, 210, 160), np.float)
     true_data = np.zeros((3, 210, 160), np.float)
@@ -125,9 +128,9 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
       pred_img = post_process(pred_data, mean_arr, 1./255)
       pred_img_list.append(pred_img.copy())
 
-    #true_data[:] = pre_process(image_bgr, mean_arr, 1./255)
-    #true_img = post_process(true_data, mean_arr, 1./255)
-    #pred_img_list.append(true_img)
+    true_data[:] = pre_process(image_bgr, mean_arr, 1./255)
+    true_img = post_process(true_data, mean_arr, 1./255)
+    pred_img_list.append(true_img)
 
     # display
     print(pred_img_list[0].shape)
