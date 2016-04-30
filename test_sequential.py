@@ -48,16 +48,16 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
   # A list of trained networks
   net_list = []
   for model_idx in range(num_models):
-    data_net_file, net_proto = N.create_netfile(model, 
-        data, mean, K + num_step, K, 1, num_act, num_step=num_step, mode='data',
-        # file_name='data.prototxt'
-        )
+    # data_net_file, net_proto = N.create_netfile(model, 
+    #     data, mean, K + num_step, K, 1, num_act, num_step=num_step, mode='data',
+    #     # file_name='data.prototxt'
+    #     )
     test_net_file, net_proto = N.create_netfile(model, data, mean, K, K, 
         1, num_act, num_step=1, mode='test', 
-        # file_name='model.prototxt'
+        file_name='model.prototxt'
         )
 
-    data_net = caffe.Net(data_net_file, caffe.TEST)
+    # data_net = caffe.Net(data_net_file, caffe.TEST)
     test_net = caffe.Net(test_net_file, caffe.TEST)
     test_net.copy_from(weights)
     net_list.append(test_net)
@@ -73,22 +73,26 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
   #  mu = mu[0]
   #  mu = mu.mean(1).mean(1)
 
-  transformer = caffe.io.Transformer({'data': (50, 3, 210, 160)})
+  # transformer = caffe.io.Transformer({'data': (50, 3, 210, 160)})
   #  transformer.set_transpose('data', (2,0,1))  # move image channels to outermost dimension
   #  transformer.set_mean('data', mean_arr)            # subtract the dataset-mean value in each channel
   #  transformer.set_raw_scale('data', 255)      # rescale from [0, 1] to [0, 255]
-  transformer.set_channel_swap('data', (2,1,0))  # swap channels from RGB to BGR
+  # transformer.set_channel_swap('data', (2,1,0))  # swap channels from RGB to BGR
+
+  input_dir = os.getcwd() + "/" + data + "/0000/"
+  print("input_dir")
+  print(input_dir)
 
   # Read the actions
-  with open("/work/04018/wxie/maverick/nips2015-action-conditional-video-prediction/example/test/0000/" + "act.log", 'rb') as f: 
+  with open(input_dir + "act.log", 'rb') as f: 
     action_list = [ int(next(f).rstrip('\n')) for x in range(num_iter) ]
- 
+  
   for i in range(0, num_iter):
-    print("iteration " + str(i) + "/" + str(num_iter)) 
-    data_net.forward()
+    print("Image: " + str(i) + "/" + str(num_iter)) 
+    # data_net.forward()
 
      # TODO stack them into one tensor 
-    image_path = "/work/04018/wxie/maverick/nips2015-action-conditional-video-prediction/example/test/0000/{0:05d}.png".format(i)
+    image_path = input_dir + "{0:05d}.png".format(i)
     print(image_path)
     image = caffe.io.load_image(image_path) # RGB h x w x c
     # Change color 
@@ -98,7 +102,7 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
     image_bgr[:,:,2] = image[:,:,0]
     
     # transformed_image = transformer.preprocess('data', image)
-    processed_image = pre_process(image_brg, mean_arr, 1./255)
+    processed_image = pre_process(image_bgr, mean_arr, 1./255)
     # t = post_process(processed_image, mean_arr, 1./255) 
     # how_img = np.hstack((t, t))
     # test_img = Image.fromarray(how_img)
