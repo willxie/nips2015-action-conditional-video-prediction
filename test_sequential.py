@@ -38,7 +38,7 @@ def post_process(data, mean, scale):
   return t.astype('uint8').squeeze().transpose([1, 0, 2]).transpose([0, 2, 1])
 
 # T is the position in time and K is the number of frames used per prediction 
-def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, num_step, num_iter,
+def main(model, num_models, weights, weights2, weights3, weights4, weights5, weights6, K, num_act, num_step, num_iter,
         gpu, data, mean, video, ):
   font = ImageFont.truetype('/usr/share/fonts/dejavu/DejaVuSans.ttf', 20)
   caffe.set_mode_gpu()
@@ -46,6 +46,7 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
   #caffe.set_mode_cpu()
 
   # A list of trained networks
+  weights_list = [weights, weights2, weights3, weights4, weights5, weights6]
   net_list = []
   for model_idx in range(num_models):
     data_net_file, net_proto = N.create_netfile(model, 
@@ -60,7 +61,10 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
         )
 
     test_net = caffe.Net(test_net_file, caffe.TEST)
-    test_net.copy_from(weights)
+    print(weights_list)
+    print(model_idx)
+    print(weights_list[model_idx])
+    test_net.copy_from(weights_list[model_idx])
     net_list.append(test_net)
 
   # Mean array used for element wise subtraction
@@ -202,7 +206,11 @@ if __name__ == "__main__":
                       default="", help="Pre-trained caffemodel 3")
   parser.add_argument("--weights4", type=str, dest="weights4",
                       default="", help="Pre-trained caffemodel 4")
-
+  parser.add_argument("--weights5", type=str, dest="weights5",
+                      default="", help="Pre-trained caffemodel 5")
+  parser.add_argument("--weights6", type=str, dest="weights6",
+                      default="", help="Pre-trained caffemodel 6")
+    
 
   args = parser.parse_args()
   main(**vars(args))
