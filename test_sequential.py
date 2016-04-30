@@ -88,7 +88,6 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
     data_net.forward()
 
      # TODO stack them into one tensor 
-
     image_path = "/work/04018/wxie/maverick/nips2015-action-conditional-video-prediction/example/test/0000/{0:05d}.png".format(i)
     print(image_path)
     image = caffe.io.load_image(image_path) # RGB h x w x c
@@ -99,7 +98,7 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
     image_bgr[:,:,2] = image[:,:,0]
     
     # transformed_image = transformer.preprocess('data', image)
-    processed_image = pre_process(image, mean_arr, 1./255)
+    processed_image = pre_process(image_brg, mean_arr, 1./255)
     # t = post_process(processed_image, mean_arr, 1./255) 
     # how_img = np.hstack((t, t))
     # test_img = Image.fromarray(how_img)
@@ -133,7 +132,8 @@ def main(model, num_models, weights, weights2, weights3, weights4, K, num_act, n
       pred_img = post_process(pred_data, mean_arr, 1./255)
       pred_img_list.append(pred_img.copy())
 
-    true_data[:] = pre_process(image_bgr, mean_arr, 1./255)
+    # true_data[:] = pre_process(image_bgr, mean_arr, 1./255)
+    true_data[:] = processed_image
     true_img = post_process(true_data, mean_arr, 1./255)
     pred_img_list.append(true_img)
 
