@@ -165,11 +165,11 @@ def main(model, num_models, weights, weights2, weights3, weights4, weights5, wei
 
     # display
     show_img = np.hstack(tuple(pred_img_list))
-    top_pad = np.zeros((35, show_img.shape[1], show_img.shape[2]), np.uint8)
-    show_img = np.vstack((top_pad, show_img))
+    # top_pad = np.zeros((35, show_img.shape[1], show_img.shape[2]), np.uint8)
+    # show_img = np.vstack((top_pad, show_img))
     img = Image.fromarray(show_img)
     draw = ImageDraw.Draw(img)
-    draw.text((10, 10), 'Step:' , fill=(255, 255, 255), font=font)
+    # draw.text((10, 10), 'Step:' , fill=(255, 255, 255), font=font)
     # cv2.imshow('Display', np.array(img))
     image_dir = "img/"
     if not os.path.exists(image_dir):
