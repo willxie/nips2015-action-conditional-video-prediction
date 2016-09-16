@@ -61,9 +61,6 @@ def main(model, num_models, weights, weights2, weights3, weights4, weights5, wei
         )
 
     test_net = caffe.Net(test_net_file, caffe.TEST)
-    print(weights_list)
-    print(model_idx)
-    print(weights_list[model_idx])
     test_net.copy_from(weights_list[model_idx])
     net_list.append(test_net)
 
@@ -95,6 +92,7 @@ def main(model, num_models, weights, weights2, weights3, weights4, weights5, wei
       action_list.append(int(line.rstrip('\n')))
     # action_list = [ int(next(f).rstrip('\n')) for x in range(num_iter) ]
 
+  mse_list =  [[] for i in range(num_models + 1)] 
   for i in range(0, num_iter):
     print("Image: " + str(i) + "/" + str(num_iter)) 
 
@@ -161,7 +159,14 @@ def main(model, num_models, weights, weights2, weights3, weights4, weights5, wei
     # true_data[:] = pre_process(image_bgr, mean_arr, 1./255)
     true_data[:] = processed_image
     true_img = post_process(true_data, mean_arr, 1./255)
+    
     pred_img_list.append(true_img)
+
+    # Compute running average mean square error
+    for mse_idx in range(len(pred_img_list)):
+      mse = ((true_img - pred_img_list[mse_idx]) ** 2).mean(axis=None)
+      mse_list[mse_idx].append(mse)
+
 
     # display
     show_img = np.hstack(tuple(pred_img_list))
@@ -176,6 +181,9 @@ def main(model, num_models, weights, weights2, weights3, weights4, weights5, wei
       os.makedirs(image_dir)
     cv2.imwrite("img/{0:05d}.jpg".format(i), np.array(img))
 
+  # Report mean square error for each model
+  for mse_idx in range(len(mse_list)): 
+    print("Model: {}\t mse: {}\t std:{}".format(mse_idx, np.mean(mse_list[mse_idx]), np.std(mse_list[mse_idx])))
 if __name__ == "__main__":
   parser = ArgumentParser()
   parser.add_argument("--model", type=int, dest="model",
