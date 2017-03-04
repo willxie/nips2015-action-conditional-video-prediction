@@ -18,7 +18,7 @@ python create_dummy_label_txt.py $DATASET_LOC
 echo "Formatting image file names..."
 python format_image_file_names.py $DATASET_LOC
 
-echo "Converting to 160x120..."
+echo "Converting to 160x210..."
 for name in $DATASET_LOC*.png; do
     convert -resize 160x210\! $name $name
 done
