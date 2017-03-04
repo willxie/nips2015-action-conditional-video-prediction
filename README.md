@@ -1,3 +1,7 @@
+# Action-Conditional Video Prediction with motion-equivariance regularizer
+
+This repository implements Rouhan and my work on Action-Conditional Video Prediction with motion-equivariance regularizer (http://willxie.com/atari.pdf). This work is an extention of the 2015 paper by Oh et al.
+
 # Introduction
 This repository implements the main algorithm of the following paper ([Project website](https://sites.google.com/a/umich.edu/junhyuk-oh/action-conditional-video-prediction)):
   * Junhyuk Oh, Xiaoxiao Guo, Honglak Lee, Richard Lewis, Satinder Singh, **"Action-Conditional Video Prediction using Deep Networks in Atari Games**"
